@@ -9,13 +9,15 @@ import com.rocketseat.pass_in.dto.attendee.AttendeeDetails;
 import com.rocketseat.pass_in.dto.attendee.AttendeesListResponseDTO;
 import com.rocketseat.pass_in.dto.attendee.AttendeeBadgeDTO;
 import com.rocketseat.pass_in.repositories.AttendeeRepository;
-import com.rocketseat.pass_in.repositories.CheckinRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -24,19 +26,44 @@ public class AttendeeService {
     private final AttendeeRepository attendeeRepository; //sem o final o Spring não identifica como um required arg esta variável
     private final CheckInService checkInService;
 
-    public List<Attendee> getAllAttendeesFromEvent(String eventId) {
-        return this.attendeeRepository.findByEventId(eventId);
+    public int getAttendeesQtyFromEvent(String eventId) {
+        return this.attendeeRepository.findByEventId(eventId).size();
     }
 
-    public AttendeesListResponseDTO getEventsAttendee(String eventId) {
-        List<Attendee> attendeeList = this.getAllAttendeesFromEvent(eventId);
+    public int getAttendeesQtyFromEvent(String eventId, String query) {
+        List<Attendee> attendeeList = this.attendeeRepository.findByEventId(eventId);
+
+        return getAttendeesFiltered(attendeeList, query).size();
+    }
+
+    public List<Attendee> getAttendeesFiltered(List<Attendee> attendeeList, String query) {
+        List<Attendee> attendeeListFiltered = attendeeList;
+
+        if (!Objects.equals(query, "")) {
+            attendeeListFiltered = attendeeListFiltered.stream().filter(attendee -> attendee.getName().toLowerCase().contains(query.toLowerCase())).toList();
+        }
+
+        return attendeeListFiltered;
+    }
+
+    public List<Attendee> getAllAttendeesFromEvent(String eventId, int pageIndex, int pageSize) {
+        return this.attendeeRepository.findByEventId(eventId, PageRequest.of(pageIndex, pageSize, Sort.by("createdAt").descending()));
+    }
+
+    public AttendeesListResponseDTO getEventsAttendee(String eventId, int pageIndex, int pageSize, String query) {
+        List<Attendee> attendeeList = this.getAllAttendeesFromEvent(eventId, pageIndex, pageSize);
+
+        attendeeList = getAttendeesFiltered(attendeeList, query);
+
         List<AttendeeDetails> attendeeDetailsList = attendeeList.stream().map(attendee -> {
             Optional<CheckIn> checkIn = this.checkInService.getCheckIn(attendee.getId());
             LocalDateTime checkedInAt = checkIn.<LocalDateTime>map(CheckIn::getCreatedAt).orElse(null);
             return new AttendeeDetails(attendee.getId(), attendee.getName(), attendee.getEmail(), attendee.getCreatedAt(), checkedInAt);
         }).toList();
 
-        return new AttendeesListResponseDTO(attendeeDetailsList);
+        int total = this.getAttendeesQtyFromEvent(eventId, query);
+
+        return new AttendeesListResponseDTO(attendeeDetailsList, total);
     }
 
     public void verifyAttendeeSubscription(String eventId, String email) {

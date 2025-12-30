@@ -36,8 +36,11 @@ public class EventController {
     }
 
     @GetMapping("/attendees/{id}")
-    public ResponseEntity<AttendeesListResponseDTO> getEventAttendees(@PathVariable String id) {
-        AttendeesListResponseDTO attendeesListResponse = this.attendeeService.getEventsAttendee(id);
+    public ResponseEntity<AttendeesListResponseDTO> getEventAttendees(@PathVariable String id,
+                                                                      @RequestParam(value = "query", defaultValue = "", required = false) String query,
+                                                                      @RequestParam(value = "pageIndex", defaultValue = "0", required = false) int pageIndex,
+                                                                      @RequestParam(value = "pageSize", defaultValue = "10", required = false) int pageSize) {
+        AttendeesListResponseDTO attendeesListResponse = this.attendeeService.getEventsAttendee(id, pageIndex, pageSize, query);
         return ResponseEntity.ok(attendeesListResponse);
     }
 
