@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,13 +25,34 @@ public class CheckInService {
         this.checkinRepository.save(newCheckIn);
     }
 
-    private void verifyCheckInExists(String attendeeId) {
-        Optional<CheckIn> isCheckedIn = this.getCheckIn(attendeeId);
+    private void verifyCheckInExists(Integer attendeeId) {
+        Optional<CheckIn> isCheckedIn = this.getCheckInByAttendeeId(attendeeId);
 
         if (isCheckedIn.isPresent()) throw new CheckInAlreadyExistsException("Attendee already checked in");
     }
 
-    public Optional<CheckIn> getCheckIn(String attendeeId) {
+    public Optional<CheckIn> getCheckInByAttendeeId(Integer attendeeId) {
         return this.checkinRepository.findByAttendeeId(attendeeId);
+    }
+
+    public List<CheckIn> getAllCheckIns() {
+        return this.checkinRepository.findAll();
+    }
+
+    public Optional<CheckIn> getCheckInById(Integer checkInId) {
+        return this.checkinRepository.findById(checkInId);
+    }
+
+    public void deleteCheckInById(Integer checkInId) {
+        Optional<CheckIn> checkIn = getCheckInById(checkInId);
+
+        if (checkIn.isPresent())
+            this.checkinRepository.deleteById(checkInId);
+    }
+
+    public void deleteCheckInByAttendeeId(Integer attendeeId) {
+        Optional<CheckIn> checkIn = getCheckInByAttendeeId(attendeeId);
+
+        checkIn.ifPresent(in -> this.checkinRepository.deleteById(in.getId()));
     }
 }

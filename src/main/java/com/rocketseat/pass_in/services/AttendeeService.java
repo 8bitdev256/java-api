@@ -46,6 +46,23 @@ public class AttendeeService {
         return attendeeListFiltered;
     }
 
+    public List<Attendee> getAllAttendees() {
+        return this.attendeeRepository.findAll();
+    }
+
+    public void deleteAttendeeById(Integer attendeeId) {
+        this.checkInService.deleteCheckInByAttendeeId(attendeeId);
+
+        Optional<Attendee> attendee = this.attendeeRepository.findById(attendeeId);
+
+        if (attendee.isPresent())
+            this.attendeeRepository.deleteById(attendeeId);
+    }
+
+    public List<Attendee> getAllAttendeesFromEvent(String eventId) {
+        return this.attendeeRepository.findByEventId(eventId);
+    }
+
     public List<Attendee> getAllAttendeesFromEvent(String eventId, int pageIndex, int pageSize) {
         return this.attendeeRepository.findByEventId(eventId, PageRequest.of(pageIndex, pageSize, Sort.by("createdAt").descending()));
     }
@@ -56,7 +73,7 @@ public class AttendeeService {
         attendeeList = getAttendeesFiltered(attendeeList, query);
 
         List<AttendeeDetails> attendeeDetailsList = attendeeList.stream().map(attendee -> {
-            Optional<CheckIn> checkIn = this.checkInService.getCheckIn(attendee.getId());
+            Optional<CheckIn> checkIn = this.checkInService.getCheckInByAttendeeId(attendee.getId());
             LocalDateTime checkedInAt = checkIn.<LocalDateTime>map(CheckIn::getCreatedAt).orElse(null);
             return new AttendeeDetails(attendee.getId(), attendee.getName(), attendee.getEmail(), attendee.getCreatedAt(), checkedInAt);
         }).toList();
@@ -78,16 +95,25 @@ public class AttendeeService {
         return newAttendee;
     }
 
-    public void checkInAttendee(String attendeeId) {
+    public void checkInAttendee(Integer attendeeId) {
         Attendee attendee = this.getAttendee(attendeeId);
         this.checkInService.registerCheckIn(attendee);
     }
 
-    private Attendee getAttendee(String attendeeId) {
+    private Attendee getAttendee(Integer attendeeId) {
         return this.attendeeRepository.findById(attendeeId).orElseThrow(() -> new AttendeeNotFoundException(("Attendee not found with ID: " + attendeeId)));
     }
 
-    public AttendeeBadgeResponseDTO getAttendeeBadge(String attendeeId, UriComponentsBuilder uriComponentsBuilder) {
+    private void deleteAttendee(Integer attendeeId) {
+        Optional<Attendee> attendee = this.attendeeRepository.findById(attendeeId);
+
+        if (attendee.isPresent()) {
+            this.checkInService.deleteCheckInByAttendeeId(attendeeId);
+            this.attendeeRepository.deleteById(attendeeId);
+        }
+    }
+
+    public AttendeeBadgeResponseDTO getAttendeeBadge(Integer attendeeId, UriComponentsBuilder uriComponentsBuilder) {
         Attendee attendee = this.getAttendee(attendeeId);
 
         var uri = uriComponentsBuilder.path("/attendees/{id}/check-in").buildAndExpand(attendeeId).toUri().toString();

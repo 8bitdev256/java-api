@@ -1,5 +1,6 @@
 package com.rocketseat.pass_in.controllers;
 
+import com.rocketseat.pass_in.domain.event.Event;
 import com.rocketseat.pass_in.dto.attendee.AttendeeIdDTO;
 import com.rocketseat.pass_in.dto.attendee.AttendeeRequestDTO;
 import com.rocketseat.pass_in.dto.attendee.AttendeesListResponseDTO;
@@ -13,12 +14,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/events")
 @RequiredArgsConstructor
 public class EventController {
     private final EventService eventService;
     private final AttendeeService attendeeService;
+
+    @GetMapping
+    public ResponseEntity<List<Event>> getAllEvents() {
+        List<Event> events = this.eventService.getAllEvents();
+        return ResponseEntity.ok(events);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteEventById(@PathVariable String id) {
+        this.eventService.deleteEventById(id);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<EventResponseDTO> getEvent(@PathVariable String id) {
@@ -48,7 +62,7 @@ public class EventController {
     public ResponseEntity<AttendeeIdDTO> registerParticipant(@PathVariable String eventId, @RequestBody AttendeeRequestDTO body, UriComponentsBuilder uriComponentsBuilder) {
         AttendeeIdDTO attendeeIdDTO = this.eventService.registerAttendeeOnEvent(eventId, body);
 
-        var uri = uriComponentsBuilder.path("/attendees/{attendeeId}/badge").buildAndExpand(attendeeIdDTO.attendId()).toUri();
+        var uri = uriComponentsBuilder.path("/attendees/{attendeeId}/badge").buildAndExpand(attendeeIdDTO.attendeeId()).toUri();
 
         return ResponseEntity.created(uri).body(attendeeIdDTO);
     }

@@ -25,6 +25,21 @@ public class EventService {
     private final EventRepository eventRepository;
     private final AttendeeService attendeeService;
 
+    public List<Event> getAllEvents() {
+        return this.eventRepository.findAll();
+    }
+
+    public void deleteEventById(String id) {
+        List<Attendee> attendees = this.attendeeService.getAllAttendeesFromEvent(id);
+
+        attendees.forEach(attendee -> this.attendeeService.deleteAttendeeById(attendee.getId()));
+
+        Optional<Event> event = this.eventRepository.findById(id);
+
+        if (event.isPresent())
+            this.eventRepository.deleteById(id);
+    }
+
     public EventResponseDTO getEventDetail(String eventId) {
         Event event = this.getEventById(eventId);
         int attendeesQty = this.attendeeService.getAttendeesQtyFromEvent(eventId);

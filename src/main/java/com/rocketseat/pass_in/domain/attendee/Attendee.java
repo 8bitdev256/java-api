@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Attendee {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     @Column(nullable = false)
     private String name;
