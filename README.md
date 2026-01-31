@@ -8,6 +8,4 @@ Implementações adicionais foram realizadas na API em Java, como paginação, c
 
 Aplicação mobile possui animações, que podem ser conferidas no vídeo abaixo:
 
-https://youtu.be/8C6DDhtHxGw
-
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/8C6DDhtHxGw/0.jpg)](https://www.youtube.com/watch?v=8C6DDhtHxGw)
